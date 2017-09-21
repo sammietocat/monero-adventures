@@ -1,0 +1,107 @@
+By Xiangmin Li, at 2017-08-11.
+\subsection{Overview}
+Let \(m\), \(\{l_j\}_{j=1}^m\) be parameters of the Ring-CT scheme, where
+	\begin{itemize}
+		\item \(m\) is the number of input coins 
+		\item \(\{l_j\}\) is a parameter governing the size of the anonymity set hiding the \(j\)-th input coin \(\calS_j\)
+	\end{itemize}
+There are 2 kinds of Ring-CT in monero project, called the simple Ring-CT (\(m>1\)) and the full Ring-CT (\(m=1\)), where the full version can only be used in case of one ring. These 2 versions of Ring-CT are detailed in following subsections respectively. \par
+\subsection{Simple Ring-CT}
+	\begin{description}
+		\item[Preparation of the transaction key] Generate a seckey-pubkey pair randomly, \( (r,R=r\cdot G)\) for the transaction to conduct.
+		\item[Preparation of the output coins] For each coins 
+			\[
+				coin_k^{(out)}=\left(P_k^{(out)},cn_k^{(out)}, \Pi_k^{(range)}\right)
+			\] 
+			to send, compute 
+			\begin{itemize}
+				\item destination address \(P_k^{(out)}=H_s(r\cdot A_k)\cdot G+B_k\), where \(A_k\) and \(B_k\) are respectively, the public viewing key and public spending key for the targeted payee, and \(H_s\) means hashing its input to a scalar over ed25519.
+				\item output commitment \(cn_k^{(out)}=y_k\cdot G+b_k\cdot H\), where \(y_k\) is the amount key and \(b_k\) is the amount
+				\item \(\Pi_k^{(range)}\) is range proof for amount \(b_k\)
+			\end{itemize}
+		\item[Mixing Input Coin with Anonymity Set] Parse the input coins as \(\calS=\{\calS_j=(P_j,cn_j)\}_{j=1}^m\), where \(cn_j=x_j\cdot G+a_j\cdot H\) commits the denomination \(a_j\) of \(\calS_j\). For each \(\calS_j\), choose arbitrary \(l_j-1\) coins as mix-ins, thus forming a coin vector. Shuffle coins in \(j\)-th vector to get the mixed coin set \(M_j=[(P_{j,1},cn_{j,1}),(P_{j,2},cn_{j,2}),\dots,(P_{j,l_j},cn_{j,l_j})]\) arranged as a column vector. 
+		\item[Preparation of Ring \(\calL_j\) for \(j=1,\dots,m\).] For each \(j=1,2,\dots,(m-1)\), there is exactly one \(\pi_j\in\{1,2,\dots,l_j\}\) such that one coin \((P_{j,\pi_j},cn_{j,\pi_j})\in M_j\) is \(\calS_j\). Make a pseudo commitment \(cn_j^*=x_j^*\cdot G+a_j\cdot H\) (i.e., a commitment on the same amount as the real input coin \(\calS_j\), which is called \texttt{pseudoOuts} in the codebase). And for \(\calL_m\), make its pseudo commitment as 
+		\[
+			cn_m^*=x_m^*\cdot G+a_m\cdot H=\left(\sum y_k-\sum_{j=1}^{m-1}x_j^*\right)\cdot G+a_m\cdot H
+		\] 
+		For \(j=1,2,\dots,m\), parse ring as
+		\[
+			\calL_j=
+			\begin{bmatrix}
+				P_{j,1} &P_{j,2} &\cdots &P_{j,l_j} \\
+				(cn_{j,1}-cn_j^*) &(cn_{j,2}-cn_j^*) &\cdots &(cn_{j,l_j}-cn_j^*)
+			\end{bmatrix}
+		\]
+		We know the secret key for column \([P_{j,\pi_j}, cn_{j,\pi_j}]^T\) as \([sk_j,(x_j-x_j^*)]^T\)
+		\item[Generation of MLSAG] For each \(\calL_j\), create an MLSAG on message 
+		\[
+			M=H_s\left(H_s(\{\calS_j\}_{j=1}^m, \{P_k^{(out)}\}),\{cn_j^*\}_{j=1}^m,\{cn_k^{(out)}\}\right)
+		\] 
+		(Other relevant but not so important parameters are left out for brevity here). The output of signing is \((\calSPK_j, I_j)\), where \(\calSPK_j\) is the ring signature on \(\calL_j\) and \(I_j\) is the key image (a.k.a, the serial number) of the input key pair \( (sk_j,P_j=sk_j\cdot G)\). Parse the final signature \(\sigma\) on the ring set \(\{\calL_j\}_{j=1}^m\) as 
+		\[
+			(\calSPK_1,I_1,cn_1^*,\dots,\calSPK_m,I_m,cn_m^*)
+		\]
+		The signature \(\sigma\), transaction public key \(R\) together with the set of output amount commitment \(\{cn_k^{(out)}\}\) and their range proof \(\{\Pi_k^{(range)}\}\) forms the proof that the transaction is conducted correctly. The payer encrypts the output amount key \(y_k\) and denomination \(b_k\) with the shared secret key \(ss=H_s(r\cdot A_k)\) as follows
+		\[
+			\begin{aligned}
+				y_k^* &= &\quad y_k+H_s(ss) \\
+				b_k^* &= &\quad b_k+H_s(H_s(ss))
+			\end{aligned}
+		\]
+		and put \(\{(y_k^*,b_k^*)\}\) in the transaction.
+		\item[Verification] Re-create 
+			\[
+				\calL_j=
+				\begin{bmatrix}
+					P_{j,1} &P_{j,2} &\cdots &P_{j,l_j} \\
+					(cn_{j,1}-cn_j^*) &(cn_{j,2}-cn_j^*) &\cdots &(cn_{j,l_j}-cn_j^*)
+				\end{bmatrix}
+			\]
+			using \(cn_j^*\). Then invoke the verification algorithm of the MLSAG to verify the \(\calSPK_j\). And the amount commitment is checked as verifying the following equality 
+			\[
+				\sum cn_k^{(out)}+b_0\cdot H=\sum_{j=1}^m cn_j^*
+			\]
+			where \(b_0\) is the transaction fee. Also, check double spending and the range proof \(\Pi_k^{(range)}\).
+	\end{description}
+\subsection{Full Ring-CT}
+	\begin{description}
+		\item[Preparation of the transaction key] Generate a seckey-pubkey pair randomly, \( (r,R=r\cdot G)\) for the transaction to conduct.
+		\item[Preparation of the output coins] For each coins \(coin_k^{(out)}=(P_k^{(out)},cn_k^{(out)}, \Pi_k^{(range)})\) to send, compute 
+			\begin{itemize}
+				\item destination address \(P_k^{(out)}=H_s(r\cdot A_k)\cdot G+B_k\), where \(A_k\) and \(B_k\) are respectively, the public viewing key and public spending key for the targeted payee
+				\item output commitment \(cn_k^{(out)}=y_k\cdot G+b_k\cdot H\), where \(y_k\) is the amount key and \(b_k\) is the amount
+				\item \(\Pi_k^{(range)}\) is range proof for amount \(b_k\)
+			\end{itemize}
+		\item[Mixing Input Coin with Anonymity Set] Parse the only input coin as \(\calS_0=(P,cn)\), where \(cn=x\cdot G+a\cdot H\) commits the denomination \(a\) of \(\calS_0\). Choose arbitrary \( (l-1)\) coins as mix-ins, thus forming a coin vector. Shuffle coins in the vector to get the mixed coin vector \(M_0=[(P_1,cn_1),(P_2,cn_2),\dots,(P_l,cn_l)]\) arranged as a column vector. 
+		\item[Preparation of Ring \(\calL_0\)] There is exactly one \(\pi\in{1,2,\dots,l}\) such that one coin \((P_{\pi},cn_{\pi})\in M_0\) is \(\calS_0\). Then parse the ring as
+		\[
+			\calL_0=
+			\begin{bmatrix}
+				P_1 &\cdots &P_l \\
+				\left(cn_1-b_0H-\sum cn_k^{(out)}\right) &\cdots &\left(cn_l-b_0H-\sum cn_k^{(out)}\right)			
+			\end{bmatrix}
+		\]
+		where \(b_0\) is the transaction fee. We know the secret key for column \([P_{\pi}, cn_{\pi}]^T\) as \([sk,(x-\sum y_k)]^T\)
+		\item[Generation of MLSAG] Create an MLSAG on message based on ring \(\calL_0\)
+		\[
+			M=H_s\left(H_s(\calS_0, \{P_k^{(out)}\}),cn,\{cn_k^{(out)}\}\right)
+		\] 
+		(Other relevant but not so important parameters are left out for brevity here). The output of signing is \( (\calSPK_0, I_0)\), where \(\calSPK_0\) is the ring signature on \(\calL_0\) and \(I_0\) is the key image (a.k.a, the serial number) of the input key pair \( (sk,P=sk\cdot G)\). Parse the final signature \(\sigma\) on the ring \(\calL_0\) as \( (\calSPK_0,I_0)\).\par
+		The signature \(\sigma\), transaction public key \(R\) together with the set of range commitment \(\{cn_k^{(out)}\}\) forms the proof that the transaction is conducted correctly. The payer encrypts the output amount key \(y_k\) and denomination \(b_k\) with the shared secret key \(ss=H_s(r\cdot A_k)\) as follows
+		\[
+			\begin{aligned}
+				y_k^* &= &\quad y_k+H_s(ss) \\
+				b_k^* &= &\quad b_k+H_s(H_s(ss))
+			\end{aligned}
+		\]
+		and put \(\{(y_k^*,b_k^*)\}\) in the transaction.
+		\item[Verification] Re-create 
+			\[
+				\calL_0=
+				\begin{bmatrix}
+					P_1 &\cdots &P_l \\
+					\left(cn_1-b_0H-\sum cn_k^{(out)}\right) &\cdots &\left(cn_l-b_0H-\sum cn_k^{(out)}\right)			
+				\end{bmatrix}
+			\]
+			Then invoke the verification algorithm of the MLSAG to verify the \(\calSPK_0\). Also, check double spending and the range proof \(\Pi_k^{(range)}\).
+	\end{description}

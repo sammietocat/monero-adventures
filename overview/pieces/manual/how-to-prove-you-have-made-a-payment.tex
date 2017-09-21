@@ -1,0 +1,19 @@
+	Cite from \url{https://www.monero.how/tutorial-how-to-prove-payment}.\par
+	These instructions are for the command line version of the Monero wallet.
+\subsubsection{Proving that you have sent payment}
+	If you need to provide details about a payment you've sent, then you MUST have access to the same wallet from which the Monero was sent. Because of the of level privacy that Monero allows for, people cannot just see a public record of payments you've sent. To prove payment, you need to have a record of something called a TXKEY which is only stored against a local copy of your Monero wallet. If you have created multiple wallets for the same address, then you cannot use any other wallet to obtain the TXKEY that you will require to prove payment. \par
+	To obtain the TXKEY for a payment you've sent, first use the \lstinline!show_transfers! command to see a list of payments you've sent out\par
+\begin{lstlisting}
+[wallet 47CL7F]: show_transfers
+\end{lstlisting}
+	From the output of this command, locate the \lstinline!TXID! of the payment you've sent. Then use the \lstinline!get_tx_key! command to obtain the \lstinline!TXKEY! for your \lstinline!TXID!
+\begin{lstlisting}
+[wallet 47CL7F]: get_tx_key 1234567890123456789012345678901212345678901234567890123456789012
+\end{lstlisting}
+	Send the \lstinline!TXKEY! or \lstinline!TXKEY!s produced by this command to the person you need to prove the transaction to.
+\subsubsection{Verifiying the proof that someone has provided you of a transaction}
+	If someone has gone through the procedure outlined above to prove a transaction to you, you can verify that they made the transaction by substituting their \lstinline!TXID!s and \lstinline!TXKEY!s, and your receiving \lstinline!ADDRESS! into the following command:
+\begin{lstlisting}
+[wallet 47CL7F]: check_tx_key TXID TXKEY ADDRESS
+\end{lstlisting}
+	This command will then confirm how much Monero, if any, was sent.

@@ -1,0 +1,43 @@
+\section{Overview}
+To evaluate the effectiveness of the proposed RingCT+ scheme, two criteria of interest are the time complexity of signature generation and latency from network transmission under different circumstances. To compare our RingCT+ and the original RingCT in current Monero, we will estimate the aforementioned criteria under two circumstances, i.e., the same size/number of mixins and the same size of anomynity set. And the detailed methods go as follow. (For convience, the original RingCT in Monero will be simply called RingCT).
+\section{Parameters}
+	\begin{itemize}
+		\item \(l\): the size of a single ring in the mixin matrix (The range of \(l\) to choose is TBD)
+		\item \(m\): the number of real input coins to mix (The range of \(l\) to choose is TBD)
+		\item \(N\): number of tests on each \( (l,m)\) pair
+	\end{itemize}
+	Given \(l\) and \(m\), the size of mixins \(S_m\) and the size of the anomynity set \(S_a\) of the RingCT and our RingCT+ can be derived as table
+	\begin{table}[!htbp]
+		\centering
+		\begin{tabular}{ccc}
+			\hline
+			Schemes & \(S_m\) & \(S_a\) \\
+			\hline
+			RingCT & \((l-1)\cdot m\) & \(l\) \\
+			RingCT+ & \( (l-1)\cdot m\) & \(l^m\) \\
+			\hline
+		\end{tabular}
+	\end{table}
+\section{The time complexity of signature generation}
+To get rid of the possible influence by other factors, tests to evaluate the time complexity focus on the core function \code{proveRctMG} which is responbile of building the mixin matrix step by step and then calculate the signature based on the resultant mix-in matrix. And for brevity, let's denote the counterpart of function \code{proveRctMG} in the monero project, as \code{proveRctMG2}.
+\subsection{Methodology}
+	\begin{enumerate}
+		\item For each \( (l,m)\) to check, we generate an l-by-m valid public key matrix \(M= [pk_{i,j}]_{l\times m}\) randomly in such a way that all the \(m\) keys in the 1st row are generated with a associated secret key. That's, they are treated as addresses for real input coins.
+		\item To evaulate the RingCT signature function, we pass \(M\) and adapt other relevant parameters accordingly to \code{proveRctMG}, and record the time of execution for signing based on these \(M\).
+		\item To evaulate the RingCT+ signature function, we pass \(M\) and adapt other relevant parameters accordingly to \code{proveRctMG2}, and record the time of execution for signing based on these \(M\).
+		\item Repeat the above process on the same \( (l,m)\) for \(N\) times, and calculate the average time for these \(N\) test cases.
+		\item Repeat the above process on other \( (l,m)\) for \(N\) times.
+	\end{enumerate}
+	By the comparison of the average time for signing under RingCT and RingCT+, put forward the corresponding conclusion. For example, how much overhead stems from the RingCT+.
+\section{The latency due to network transmission}
+Similarly, tests to estimate latency are conducted subject to the core RPC calls from wallets from daemons.\par
+And here parameters are a little different. To achieve the same size of anomynity set (say \(S_a=l^m\)) for \(m\) input coins, the size of a single ring in the RingCT+ would be only \(l\), while it's \(l^m\) for the RingCT. Hence, the dimension of the public key matrix will need to be adjust accordingly as shown in the following methodology part.
+\subsection{Methodology}
+	\begin{enumerate}
+		\item For each \( (l^m,m)\) to check, we generate randomly an l-by-m valid public key matrix \(M_1= [pk_{i,j}]_{l\times m}\) and an \(l^m\)-by-m one \(M_2=[pk_{i,j}]_{l^m\times m}\), in such a way that all the \(m\) keys in the 1st row of both \(M_1\) and \(M_2\) are generated with a associated secret key. That's, they are treated as addresses for real input coins.
+		\item Generate signatures for the RingCT and RingCT+ by function \code{proveRctMG} on \(M_1\) and \code{proveRctMG2} on \(M_2\) respectively, and collect the output signature as \(Sig_1\) and \(Sig_2\).
+		\item For each \(Sig_i\) (\(i\in {1,2}\)), transfer the signed transaction bound with \(Sig_i\) to a preset standalone daemon, and record the time from the beginning of the transfer and the ending of receving (or parsing?) on the daemon side.
+		\item Repeat the above process on the same \( (l^m,m)\) for \(N\) times, and calculate the average time for these \(N\) test cases.
+		\item Repeat the above process on other \( (l^m,m)\) for \(N\) times.
+	\end{enumerate}
+	By the comparison of the average time for transmisson under RingCT and RingCT+, put forward the corresponding conclusion. For example, how much latency has been reduced due to optimised anomynity provided by RingCT+.

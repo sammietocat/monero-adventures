@@ -1,0 +1,63 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage{amsmath}
+\usepackage[top=1in,right=1in,bottom=2in,left=1in]{geometry}
+\usepackage{xcolor}
+\usepackage{hyperref}
+
+\begin{document}
+\title{RCT implementation tracking}
+\author{LoCCS}
+\maketitle
+
+\section{Problem 1}
+\paragraph{Statement} The first version of the full RingCT implementation is committed on 13/May/2016, in the commit ``9b1afe'' (for brevity, hash of commit is written in short format).
+\paragraph{Reply} The full RingCT implementation (a.k.a, the RingCT protocol in the codebase) is merged into master branch of the project in that commit. The core of the implementation involve mainly 2 functions, i.e., \texttt{rct::genRct} and \texttt{rct::verRct} (declared/defined in \texttt{src/ringct/\{rctSigs.h,rctSigs.cpp\}}), where 
+	\begin{itemize}
+		\item \texttt{rct::genRct} is responsible for generating a MLSAG for a given ring and a range proof for the amount bound to addresses specified by the ring. 
+		\item \texttt{rct::verRct} is to verify the MLSAG and range proof from \texttt{rct::genRct}.
+	\end{itemize}
+	As seen, these core functions handle \textcolor{red}{MLSAG generation/verification and range proof, which is only part of the job to do during constructing a transaction}. Other subroutines for making a transaction include
+	\begin{itemize}
+		\item generate a random transaction key
+		\item popuplate the input coins with their indices in the corresponding output transaction, etc
+		\item derive addresses of destinations to send coins to
+		\item ...
+	\end{itemize}
+	And the mix-ins ring is maded up randomly for \texttt{rct::genRct} for signing. After checking the codebase, I found that the transaction construction function \texttt{cryptonote::construct\_tx\_and\_get\_tx\_key} hasn't integrated \texttt{rct::genRct} into its operation yet. Actually, \textcolor{red}{\texttt{rct::genRct} and \texttt{rct::verRct} are not used in any other places up to commit ``4fd01f''}.
+\section{Problem 2}
+\paragraph{Statement} The first version of RingCT simple is committed on 9/Jul/2016, in the commit ``4fd01f''. The idea of RingCT simple is integrated in the process on 10/Jul/2016 in the commit ``a4d4d6''.
+\paragraph{Reply} ~ 
+	\begin{itemize}
+		\item In commit at ``4fd01f'', functions bound to the simple RingCT are implemented as \texttt{rct::genRctSimple} for signing and \texttt{rct::verRctSimple} for verifying. But they are not integrated into the transaction construction function \texttt{cryptonote::construct\_tx\_and\_get\_tx\_key} yet, while \textcolor{red}{the full RingCT has been employed}.
+		\item In commit at ``a4d4d6'' (one day after ``4fd01f''), \textcolor{red}{the simple RingCT functions are finally embedded into constructing transactions}. Use the simple RingCT if all input coins are from previous RingCT transaction outputs (i.e., the amount mask value \(a\neq 1\) for the corresponding amount commitment \(a\cdot G+amount\cdot H\)), and employ the full RingCT otherwise.
+	\end{itemize}
+\section{Problem 3}
+\paragraph{Statement} The RingCT full and simple is defined as a type on 8/Aug/2016 in the commit ``3ab2ab'', i.e. \texttt{rv.type = RCTTypeFull} or \texttt{rv.type = RCTTypeSimple}. So, we might be able to run the RingCT full by set the type to \texttt{RCTTypeFull} in the current version of Monero.
+\paragraph{Reply} This commit just add a \texttt{type} to the signature object \texttt{rctSig} for future expansion, i.e., better scalability of the application. The transaction construction function \texttt{cryptonote::construct\_tx\_and\_get\_tx\_key} remains almost unchanged as that in commit ``a4d4d6''. And \textcolor{red}{the type of RingCT to make is determined systematically by that function other than manually, which means it cannot be set without modifying the code}.
+
+\section{Observation}
+The criteria is updated at commit ``a0925e'' (27/Aug/2016 before the release verion 0.10.0 on 19/Sep/2016), for using which type of RingCT during transaction construction. As specified by the codebase and the message explaining the commit, \textcolor{red}{the simple RingCT will be used in case of more than one coin to spend, and instead the full one is used in case of only one coin}. And this criteria is kept up till now.\par
+I found a \href{https://monero.stackexchange.com/questions/3348/what-are-3-types-of-ring-ct-transactions}{post} about the 3 transaction types (i.e., no/simple/full RingCT) in StackExchange. In that post, Lee Clagett, one of the contributors of the monero project, explains briefly that the simple RingCT is preferred over the full one primarily due to privacy concerns. 
+
+\section{Summary}
+After its introduction, the simple RingCT is preferred over the full one, which is implemented in the codebase. With reference to the information above, I think the experiment to evaluate the original RCT and our RCT+ may be carried out as either of ways below.
+	\begin{itemize}
+		\item Scheme 1 (Different version of codebases): 
+			\begin{itemize}
+				\item For original RCT targeting multiple input coins, without modifying any code of the original project,
+					\begin{itemize}
+						\item Evaluate the full RCT based on the codebase at commit ``4fd01f''
+						\item Evaluate the simple RCT based on the codebase at commit ``a4d4d6''
+					\end{itemize}
+				\item Evaluate RCT+ based on ``a4d4d6``
+			\end{itemize}
+		\item Scheme 2 (Latest codebase):
+			\begin{itemize}
+				\item For original RCT targeting multiple input coins, based on the latest codebase, manually modify the criteria for choosing the type of RCT to use in the core function \\
+					\texttt{cryptonote::construct\_tx\_and\_get\_tx\_key} (actually just a few lines of code), and then evaluate the full RCT and the simple one respectively with slightly customized transaction construction function. Actually, the critical routine of constructing the transaction remains unchanged with respected to that in the codebase. It's just the rule to choose the simple RCT or the full RCT is modified slightly only, thus introducing no unwanted penalty affecting the performance evaluation.
+				\item Evaluate RCT+ based on the same codebase.
+			\end{itemize}
+	\end{itemize}
+
+\end{document}

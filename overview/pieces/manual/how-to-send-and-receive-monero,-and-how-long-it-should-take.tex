@@ -1,0 +1,57 @@
+	Cite from \url{https://www.monero.how/tutorial-how-to-send-and-receive-monero-command-line}
+\subsubsection{Overview}
+	Before you begin: Follow the \href{https://www.monero.how/tutorial-how-to-create-a-command-line-monero-wallet}{tutorial for setting up a command line Monero wallet}, and the run the monero-wallet-cli program.
+\subsubsection{Checking your balance}
+\begin{lstlisting}
+[wallet 47CL7F]: balance
+Balance: 0.400000000000, unlocked balance: 0.400000000000
+\end{lstlisting}
+	The balance command shows you your Monero balance. In the example above, the wallet contains 0.4 Monero. If a payment was only recently received, it will around 20 minutes for that payment to become "unlocked" before you can consider it fully confirmed as received. Until it becomes unlocked, you cannot spend recently received Monero. 
+	\begin{importantbox}
+		Make sure your Monero daemon is running and successfully syncing with the network. Your Monero wallet will not be able to see its balance and any new payments received unless the Monero daemon is correctly synced to the network.
+	\end{importantbox}
+\subsubsection{Detailed explanation of how transactions are sent and how long they take}
+	When someone sends Monero to you, the Monero network will include that transaction in a Monero "block". A block is a record of a batch of transactions that have been announced to the Monero network of nodes. \par
+	These blocks are then "mined", which is the mechanism by which these blocks are verified in a distributed way across the entire network of Monero miners. \par
+	Each block takes on average 2 minutes to mine by the network. The successful mining of each block results in a "confirmation". After 10 confirmations, which due to the mining process will statistically involve the activity of a vast number of Monero miners to agree upon, the transaction is considered fully verified. On average, it therefore takes approximately 20 minutes for a Monero transaction to be fully verified and funds available to be spent in a subsequent transaction.
+\subsubsection{Receiving early notification of payments received (i.e. without waiting 20 minutes)}
+	Your Monero wallet will automatically notify you with a message about an incoming transaction after it has received one confirmation by the network. The first block will take on average 2 minutes to be confirmed, and your wallet will scan the network every 90 seconds for updates. Due to the statistical probabilities involved in confirming blocks, your first block could confirm faster or slower than the 2 minute average. If you are unlucky, it might take 10 minutes or a little longer in some instances for the first block to be confirmed. Therefore after a payment is sent to you, you generally will need to wait for 4-12 minutes for your wallet to first notify you of the transaction. 
+	\begin{importantbox}
+		The notification you see of the first confirmation of a received payment is a good sign things are working, but you should always wait for the 10 confirmation period to feel completely safe that the transaction has not been reversed or "double spent" by a rogue sender. 
+	\end{importantbox}
+	Also see our article on \href{https://www.monero.how/how-long-do-monero-transactions-take}{how long Monero transactions take}.
+\subsubsection{Viewing zero confirmation notifications (FASTEST way to see the first signs of a transaction being received)}
+	A zero confirmation transaction is a transaction that has been announced to the Monero network but has not been verified even once. Although you should never rely on zero confirmation notifications, they are useful as a sanity check to verify that the sender has at least begun the process of sending a payment to your wallet. \par
+	To see zero confirmation transactions, type the following command into your wallet:
+\begin{lstlisting}
+[wallet 47CL7F]: show_transfers pool
+\end{lstlisting}
+\subsubsection{How to ask somone to send you Monero}
+	To see your public wallet address, type the following command into your wallet:
+\begin{lstlisting}
+[wallet 47CL7F]: address 47CL7FiNtW417VjzWt9Zse8Z8URhaHaA2L9jJq6rrLtDhiYK9PfbCavhhMKws9 xEdKHBeGcQtJmPt4uEMivooNztC5UkHLD
+\end{lstlisting}
+	Then tell the sender your address and they will be able to send Monero to you.
+\subsubsection{How to ask somone to send you Monero, specifying a payment ID}
+	If multiple people are sending you Monero, it will be confusing to figure out who sent what. To solve this problem, you can generate a unique "payment id" to tell to the person that is sending you funds. To generate an "integrated address" which combines your public Monero address with a newly generated payment id, type the following command into your wallet:
+\begin{lstlisting}
+[wallet 47CL7F]: integrated_address
+Random payment ID: <9e5d624026c5c274>
+Matching integrated address: 4Gu184XsVma17VjzWt9Zse8Z8URhaHaA2L9jJq6rrLtDhiYK9PfbCavhhM Kws9xEdKHBeGcQtJmPt4uEMivooNztHViznm8GhvREB6AU3C
+\end{lstlisting}
+	Then tell the sender your integrated address and they will be able to send Monero to you. To view a list of payments received along with their unique paymenent ids, type this command:
+\begin{lstlisting}
+[wallet 47CL7F]: show_transfers
+\end{lstlisting}
+	To view only payments received using a particular payment id, use the following command (substituting the example payment id with your own):
+\begin{lstlisting}
+[wallet 47CL7F]: payments 9e5d624026c5c274
+\end{lstlisting}
+\subsubsection{How to send Monero to someone else}
+	To send 0.1 Monero to someone that has given you their public address or an integrated address (see section above on payment ids), type:
+\begin{lstlisting}
+[wallet 47CL7F]: transfer 4Gu184XsVma17VjzWt9Zse8Z8URhaHaA2L9jJq6rrLtDhiYK9PfbCavhhMKws 9xEdKHBeGcQtJmPt4uEMivooNztHViznm8GhvREB6AU3C 0.1
+\end{lstlisting}
+	(note that although the text above is split over multiple lines, the command should be typed as one line with a space between their address and the amount of the payment)
+\subsubsection{Proving that you have sent payment}
+	If you need to prove to someone that you've made a payment to them, see \href{https://www.monero.how/tutorial-how-to-prove-payment}{this tutorial}.

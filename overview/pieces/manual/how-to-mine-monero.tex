@@ -1,0 +1,75 @@
+	Cite from \url{https://www.monero.how/tutorial-how-to-mine-monero}.\par
+	\begin{table}[H]
+		\centering
+		\caption{MINING POOLS}
+		\begin{tabular}{lrr}
+			\hline
+				&Hash rate KH/s	&Miners \\
+			\hline
+			minexmr.com	&16,473	&6,678 \\
+			monero.crypto-pool.fr	&15,422	&1,305 \\
+			supportxmr.com	&2,196	&372 \\
+			moneropool.com	&2,173	&462 \\
+			xmr.prohash.net	&1,383	&163 \\
+			monerohash.com	&1,160	&959 \\
+			usxmrpool.com	&260	&155 \\
+			xmrpool.eu	&216	&176 \\
+			xmrpool.net	&201	&153 \\
+			pool.xmr.pt	&30	&18 \\
+			xmr.poolto.be	&28	&55 \\
+			minemonero.pro	&7	&8 \\
+			\hline
+		\end{tabular}
+	\end{table}
+	\begin{table}[H]
+		\centering
+		\caption{MINING SOFTWARE}
+		\begin{tabular}{ll}
+			\hline
+			xmr-stak-cpu   &Best for newer Intel processors \\
+			xmr-stak-amd   &Best for AMD GPUs \\
+			xmr-stak-nvidia   &For NVIDIA GPUs \\
+			xmrminer   &For NVIDIA GPUs \\
+			monerospelunker   &Easiest way to start mining with Windows \\
+			cpuminer-multi   &Linux CPU mining, alternative to xmr-stak-cpu \\
+			\hline
+		\end{tabular}
+	\end{table}
+\subsubsection{Overview}
+	Before you begin, follow our tutorial for \href{https://www.monero.how/tutorial-how-to-create-a-command-line-monero-wallet}{creating a Monero wallet}. Then choose a mining pool from the list above. For the resilience of the Monero mining network, it is advisable that we all choose different mining pools so that an unhealthy concentration does not appear at any one mining pool. The examples below use the ``stratum+tcp://pool.minexmr.com:4444'' address for the mineXMR.com pool. Swap that address for the address of the pool you wish to use.
+\subsubsection{Mining Monero on Windows using MoneroSpelunker}
+MoneroSpelunker (\href{https://www.reddit.com/r/Monero/comments/51c36c/gui_is_finally_here/}{announced here}) is a Windows GUI for the popular Wolf CPU miner. Download the zip file \href{https://github.com/jwinterm/monerospelunker/releases}{here}, and unzip it. Then run the monerospelunker.exe file and enter your Monero wallet address were you would like to be paid for your mining. Enter the mining address of the pool you have chosen, then click 'start mining'. 
+	\begin{figure}[htbp!]
+		\centering
+		\includegraphics[width=0.8\linewidth]{./images/manual/spelunkerminer.jpg}
+	\end{figure}
+\subsubsection{Mining Monero on Fedora 24 and above}
+Remember to replace \lstinline!WALLET_ADDRESS_HERE! with your own Monero wallet's public address. The ``-t 3'' option determines how many of your CPU threads will be used for mining. 
+\begin{lstlisting}
+yum -y install git curl-devel libcurl glib-devel libtool
+git clone https://github.com/hyc/cpuminer-multi
+cd cpuminer-multi
+./autogen.sh
+CFLAGS="-march=native" ./configure
+make
+sudo ./minerd -a cryptonight -o stratum+tcp://pool.minexmr.com:4444 -u WALLET_ADDRESS_HERE -p x -t 3
+\end{lstlisting}
+\subsubsection{Mining Monero on Ubuntu 14 and above}
+	Remember to replace \lstinline!WALLET_ADDRESS_HERE! with your own Monero wallet's public address. The ``-t 3'' option determines how many of your CPU threads will be used for mining.
+\begin{lstlisting}
+sudo apt-get install git libcurl4-openssl-dev build-essential libjansson-dev autotools-dev automake
+git clone https://github.com/hyc/cpuminer-multi
+cd cpuminer-multi
+./autogen.sh
+CFLAGS="-march=native" ./configure
+make
+sudo ./minerd -a cryptonight -o stratum+tcp://pool.minexmr.com:4444 -u WALLET_ADDRESS_HERE -p x -t 3
+\end{lstlisting}
+\subsubsection{Checking your mining earnings}
+	\begin{figure}[htbp!]
+		\centering
+		\includegraphics[width=0.8\linewidth]{./images/manual/mining-payments.jpg}
+	\end{figure}
+	To check how much Monero you have earned through your mining efforts, enter your wallet address into the ``Lookup'' box at the mining pool site. It will tell you how much you have earned, and how much has been paid out so far. \par
+	Note that each mining pool has a payment threshold, which saves on transaction fees by only paying out once you have mined a certain amount of Monero. Be prepared for it to take days or weeks to receive your first payment, depending on the speed of your computer hardware. \par
+	Note that with some pools, your Hash Rate will be reported as zero for most of the time, until you suddenly submit a 'share' to the pool from your mining efforts. You will temporarily see your Hash Rate reported, after which it will return to zero. This is normal for some pools, and you do not need to worry that something is not working correctly. As long as after a while you see the ``total hashes submitted'' figure increase, then your mining setup is working.

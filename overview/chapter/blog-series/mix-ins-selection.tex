@@ -1,0 +1,100 @@
+By Xiangmin Li on July 30th, 2017.
+\subsection{Notations}
+	\begin{itemize}
+		\item \(n\): number of mix-in requested 
+		\item \(pk_i\):  public keys of the output indexed by the global output index \(i\) 
+		\item \(C_i\):  commitment of the output indexed by the global output index \(i\)
+		\item \(unlocked\): means the outputs are available for spending 
+		\item \(x\): the number of RCT outputs, including those spent. Hence, it's also the upper index limit of global indices of these outputs 
+		\item \(y\): the number of unlocked RCT outputs among all RCT ones, including those spent. Hence, it’s also the upper index limit of global indices of these unlocked outputs 
+		\item \(z\): the number of recent RCT outputs among \(y\) unlocked ones. Hence, the range of indices for recent RCT outputs should be \([y−z,y]\)
+		\item \(\Delta w_c\):  a time window of recent cut off, i.e., the time interval of interest is \([t-\Delta w_c, t]\) given \(t\) is a referenced moment 
+		\item \(\Delta w_1\): the unlocked time window for money \
+		\item \(\Delta w_2\): the default spendable age of the transaction 
+		\item \(\pi\):  the global index of the real output
+	\end{itemize}
+\subsection{About the global output index}
+Similar to the CryptoNote protocol, outputs in Monero are organized into \textcolor{red}{groups} according to their amounts, and a \textcolor{red}{global output index} represents the index of a given output in its corresponding group. This reduces the size of the ring signature by only storing those indices of outputs in the signature instead of the actual public keys.\par
+After the activation of RingCT, the denomination of outputs is no longer necessary, and all the RingCT outputs (whose amounts are hidden) are stored in the same group (associated with the amount of 0 XMR by convention). There are 1491097 RingCT outputs as of now, and this transaction generated the two latest outputs at indices of 1491095 and 1491096.\par
+For convenience, all the statement henceforth will only refer to RingCTs.
+\subsection{Workflow}
+There's no check for double spending in the mix-ins selection procedure. And the detail goes as following sequence diagram as \figurename~\ref{fig-mix-ins-selection}.
+\begin{figure}[!htbp]
+	\centering
+	\begin{tikzpicture}[auto,
+		place/.style={rectangle,draw},
+		marrow/.style={->,thick}]
+		\footnotesize
+		\node [place,rounded corners,inner sep=2mm] (wallet) {Wallet};
+		\node [place,rounded corners,inner sep=2mm] (daemon) [right=7cm of wallet]  {Daemon};
+
+		\node (output-req-send) [below=of wallet] {};
+		\node (output-req-recv) [below=of daemon] {};
+
+		% need to set text width for placing list
+		\node [place] (output-req-handling) [below=of output-req-recv,text width=6cm] {
+			\footnotesize
+			Query database for
+			\begin{itemize}
+					\setlength\topsep{0em}
+					\setlength\itemsep{0em}
+				\item \(x\)=\#(outputs) of the same amount
+				\item \(y\)=\#(unlocked instances) among \(x\)
+				\item \(z\)=\#(recent instances) among \(y\)
+			\end{itemize}
+		};
+		\node (output-req-feedback-recv) at (output-req-send |- output-req-handling) {};
+		\node [place] (estimate-request-output-count) [below=of output-req-feedback-recv, text width=9cm] {
+			\footnotesize
+			Estimate
+			\begin{itemize}
+				\item \#(requested output)\(=a=(n+1)\cdot 1.5+1+\Delta w_1+\Delta w_2\)
+				\item \#(requested recent output)\(=b=0.5a\)
+			\end{itemize}
+		};
+		\node [place] (construct-request-output-indices) [below=of estimate-request-output-count, text width=9cm] {
+			\footnotesize
+			Construct the requested outputs indices set \(I\)
+			\begin{itemize}
+				\item If \(y\leq a\), set \(I=\{0,1,\dots,y-1,y-1,\dots,y-1\}\) where \(|I|=a\)
+				\item Otherwise 
+					\begin{enumerate}
+						\item \(I=\{\pi\}\)
+						\item Pick another \(b\) unique recent output indices by triangular distribution and add then to \(I\)
+						\item Pick another \( (a-b-1)\) unique other outputs by triangular distribution and add them to \(I\)
+						\item Sort elements in \(I\) according to their values
+					\end{enumerate}
+			\end{itemize}
+		};
+		\node (keys-request-send) [below=of construct-request-output-indices] {};
+		\node (keys-request-recv) at (keys-request-send -| output-req-handling) {};
+		\node [place] (keys-query) [below=of keys-request-recv,text width=6cm] {
+			Query database to find out \(\{(i,pk_i,C_i)\}\) (\textcolor{red}{no double spending check here})
+		};
+		\node (keys-recv) at (keys-request-send |- keys-query) {};
+		\node [place] (chk-real-output) [below=of keys-recv] {Check the existence of the real output};
+		\node [place] (pick-mix-ins) [below=of chk-real-output, text width=9cm] {
+			Pick randomly \(n\) unique and unlocked instances excluding the real output, and construct the MLSAG using these \( (n+1)\) instances. \textcolor{red}{Note}: The \(pk_i\) corresponding to the spent output may be included but that seems to do little good to the linkability
+		};
+		\node (wallet-end) [below=of pick-mix-ins] {};
+		\node (daemon-end) at (wallet-end -| keys-query) {};
+
+		% horizontal arrows
+		\draw [marrow] (output-req-send) to node [align=center] {Request the output histogram satisfying\\ \(unlocked\wedge\Delta w_c=1.8\ day\)} (output-req-recv);
+		\draw [marrow] (output-req-handling) to node [swap] {\( (x,y,z)\)} (output-req-feedback-recv);
+		\draw [marrow] (keys-request-send) to node {Request all key stuff corresponding to outputs indexed by \(I\)} (keys-request-recv);
+		\draw [marrow] (keys-query) to node {Response with \(\{(i,pk_i,C_i)\}\)} (keys-recv);
+	
+		% vertical arrows
+		\draw [marrow] (wallet) to (estimate-request-output-count);
+		\draw [marrow] (estimate-request-output-count) to (construct-request-output-indices);
+		\draw [marrow] (construct-request-output-indices) to (chk-real-output);
+		\draw [marrow] (chk-real-output) to (pick-mix-ins);
+		\draw [marrow,dashed] (pick-mix-ins) to (wallet-end);
+
+		\draw [marrow] (daemon) to (output-req-handling);
+		\draw [marrow] (output-req-handling) to (keys-query);
+		\draw [marrow,dashed] (keys-query) to (daemon-end);
+	\end{tikzpicture}
+	\caption{Mix-ins selection procedure}\label{fig-mix-ins-selection}
+\end{figure}

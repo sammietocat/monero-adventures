@@ -1,0 +1,86 @@
+Cited from \url{https://www.monero.how/tutorial-how-to-speed-up-initial-blockchain-sync}
+\subsubsection{Overview}
+	\begin{notebox}
+	This tutorial contains instructions for Windows, Mac and Linux users. Skip over steps that do not apply to you. 
+	\end{notebox}
+
+	In this tutorial, we show you how to download the Monero wallet and Monero daemon. The Monero wallet is used to securely store your Monero, and is what you will use to check your Monero balance and send and receive Monero. The job of the Monero daemon is to communicate with the network to notify you of new transactions. \par
+	\begin{warningbox}
+		If you are booting to a Pendrive or LiveCD, you will not have any hard drive storage available to you, so this tutorial will not work unless you have at least 16GB of RAM available for storage of the blockchain. To clarify, this RAM requirement ONLY applies to Pendrive or LiveCD installations and not to the majority of people with regularly installed operating systems. If you don't have this much RAM in your laptop, \href{https://www.monero.how/tutorial-how-to-create-a-monero-wallet-linux-boot-usb-pendrive}{this tutorial} will show you how to create a Monero wallet on a Live CD booted machine which can talk to a trusted remote daemon. 
+	\end{warningbox}
+To begin, open a terminal window (Mac/Linux) or command prompt (Windows) and type the following text that appears in black. Orange text is instructions, and some black text is sample output from the commands you will be running. 
+
+\begin{lstlisting}[mathescape]
+# LINUX: Download the Linux 64-bit command line client and extract it
+wget https://downloads.getmonero.org/linux64
+tar jxvf linux64
+
+# MAC: Download the Mac command line client and extract it
+wget https://downloads.getmonero.org/mac64
+tar jxvf mac64
+
+# WINDOWS: Create a new folder with Windows File Explorer, and use your web browser to download the following file to the new folder
+https://downloads.getmonero.org/win64
+
+# WINDOWS: Double click the Monero zip file that has been downloaded to extract it. Then open Command Prompt. Use the 'cd' command to naviate to your new folder
+cd monero
+
+# Run the Monero daemon. It will sync with the network and display the message "You are now synchronized with the network. You may now start monero-wallet-cli" when it is completely up to date with the network
+# LINUX/MAC:
+./monerod
+# WINDOWS:
+monerod.exe
+
+# The job of the Monero daemon is to monitor the network for new transactions. You now need to open a new terminal window and run the Monero command line wallet, which will communicate with the Monero daemon that you've just stared.
+# LINUX/MAC:
+./monero-wallet-cli
+# WINDOWS:
+monero-wallet-cli.exe
+
+# Follow the instructions displayed to create a new wallet. When told the 25 word SEED, write this down on paper and keep it in a very safe place. Even if you forget your passwords, the 25 word SEED can be used to recreate your wallet from any machine and have complete control over your Monero funds. Sample output from the Monero wallet is below:
+
+Specify wallet file name (e.g., MyWallet). If the wallet doesn't exist, it will be created.
+Wallet file name (or Ctrl-C to quit): testwallet
+No wallet found with that name. Confirm creation of new wallet named: testwallet
+(Y/Yes/N/No): Y
+Generating new wallet...
+Enter a password for your new wallet:  ********
+Confirm Password: ********
+List of available languages for your wallet's seed:
+0 : English
+1 : Spanish
+2 : German
+3 : Italian
+4 : Portuguese
+5 : Russian
+6 : Japanese
+Enter the number corresponding to the language of your choice: 0
+Generated new wallet: 47CL7FiNtW417VjzWt9Zse8Z8URhaHaA2L9jJq6rrLtDhiYK9PfbCavhhMKws9xEd KHBeGcQtJmPt4uEMivooNztC5UkHLD
+View key: 005c98c3db115140289bd0dfad97f910e6eeb5e8e12d02fdd4ab2373fbe9110a
+**********************************************************************
+Your wallet has been generated!
+To start synchronizing with the daemon, use "refresh" command.
+Use "help" command to see the list of available commands.
+Always use "exit" command when closing monero-wallet-cli to save your
+current session's state. Otherwise, you might need to synchronize
+your wallet again (your wallet keys are NOT at risk in any case).
+
+
+PLEASE NOTE: the following 25 words can be used to recover access to your wallet. Please write them down and store them somewhere safe and secure. Please do not store them in your email or on file storage services outside of your immediate control.
+
+locker welders womanly lodge gumball selfish altitude dewdrop
+terminal nagged exit acquire hookup ashtray wobbly nineteen
+duration duties javelin patio baffles ambush bamboo bite nineteen
+**********************************************************************
+Starting refresh...
+Refresh done, blocks received: 0
+Balance: 0.000000000000, unlocked balance: 0.000000000000
+Background refresh thread started
+
+
+# Type "address" to see your public wallet address. You can give this address to anyone, and they will be able to send you Monero. However, NEVER give anyone your 25 word SEED.
+
+[wallet 47CL7F]: address
+47CL7FiNtW417VjzWt9Zse8Z8URhaHaA2L9jJq6rrLtDhiYK9PfbCavhhMKws9xEdKHBeGcQtJmPt4uEMivooNz tC5UkHLD
+\end{lstlisting}
+Congratulations, you have now created a Monero wallet, and can now \href{https://www.monero.how/tutorial-how-to-send-and-receive-monero-command-line}{send and receive Monero}.

@@ -1,0 +1,179 @@
+%!TEX program=xelatex
+\documentclass[a4paper,10pt]{report}
+
+\usepackage{amsmath,amssymb}
+\usepackage{array}
+\usepackage[english]{babel}
+\usepackage{csquotes}
+\usepackage{ctex}
+\usepackage{float}
+\usepackage[top=1in,right=1in,bottom=1in,left=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{indentfirst}
+\usepackage{listings}
+\usepackage{subcaption}
+\usepackage{tcolorbox}
+\usepackage{tikz}
+\usepackage{titlesec}
+
+\usetikzlibrary{arrows,decorations.pathmorphing,backgrounds,positioning,fit,mindmap,petri}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+}
+\urlstyle{same}
+
+\lstset{
+  basicstyle=\footnotesize\ttfamily,           % the size of the fonts that are used for the code
+  numbers=left,
+  tabsize=2,
+  breaklines=true,
+  keywordstyle=\color{blue},          % keyword style
+  commentstyle=\color{red!70!green},       % comment style
+  stringstyle=\color{cyan},          % string literal style
+  frame=trBL,     
+  %numbersep=0pt
+  numberstyle=\footnotesize,
+  morecomment=[l]{\#},
+  morecomment=[l]{//},
+  morecomment=[s]{/*}{*/},
+}
+
+\newcommand{\bM}{\mathbf{M}}
+\newcommand{\code}[1]{\lstinline!#1!}
+\newcommand{\calL}{\mathcal{L}}
+\newcommand{\calS}{\mathcal{S}}
+\newcommand{\calSPK}{\mathcal{SPK}}
+
+% make a box for note
+\newenvironment{notebox}
+	{
+		\begin{tcolorbox}[attach title to upper,after title={:\quad},colframe=cyan,coltitle=cyan,sharp corners=downhill,title=\textbf{Note}]
+	}{
+		\end{tcolorbox}	
+	}
+% make a box for warning
+\newenvironment{warningbox}
+	{
+		\begin{tcolorbox}[attach title to upper,after title={:\quad},colframe=red!70!green,coltitle=red!70!green,sharp corners=downhill,title=\textbf{Warning}]
+	}{
+		\end{tcolorbox}	
+	}
+% make a box for important
+\newenvironment{importantbox}
+	{
+		\begin{tcolorbox}[attach title to upper,after title={:\quad},colframe=red,coltitle=red,sharp corners=downhill,title=\textbf{IMPORTANT}]
+	}{
+		\end{tcolorbox}	
+	}
+\title{A Tour of the Monero Project}
+\author{Sammy}
+\date{\today}
+
+\titleformat
+	{\chapter} % command
+	[hang] % shape
+	{\bfseries\Huge} % format
+	{Chapter \thechapter.} % label
+	{1mm} % sep
+	{} % before-code
+	[] % after-code
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+% conditional switches for compilation
+\def\ManualOff{}
+\def\ProjectOf{}
+\def\ExperimentOff{}
+\def\BlogSeriesOf{}
+
+\chapter{Overview}
+Monero is a project consists of several components as follows.\par
+\begin{tikzpicture}[mindmap,every node/.style=concept,concept color=black!20,
+		grow cyclic,
+		level 1/.append style={level distance=4cm,sibling angle=90},
+		level 2/.append style={level distance=3cm,sibling angle=45}]
+
+		\node [root concept] {Monero}
+			child {node {ring signatures}}
+			child {node {stealth addresses}}
+			child {node {Pedersen commitment}
+				child {node {Borromean signatures}}
+			}
+			child {node {PoW}};
+
+\end{tikzpicture}
+
+\ifx\ManualOff\undefined
+\chapter{Manual for Monero Core Software}
+\section{How to create a Monero command line wallet}
+	\input{pieces/manual/how-to-create-a-monero-cmd-line-wallet}
+
+\section{How to speed up initial blockchain sync}
+	\input{pieces/manual/how-to-speed-up-initial-blockchain-sync}
+
+\section{How to send and receive Monero, and how long it should take (command line wallet)}
+	\input{pieces/manual/how-to-send-and-receive-monero,-and-how-long-it-should-take}
+
+\section{How to prove you've made a payment}
+	\input{pieces/manual/how-to-prove-you-have-made-a-payment}
+
+\section{How to buy Monero}
+	\input{pieces/manual/how-to-buy-monero}
+
+\section{How to mine Monero on Windows or Linux (Fedora or Ubuntu)}
+	\input{pieces/manual/how-to-mine-monero}
+
+\section{Glossary of the most important Monero terms}
+	\input{pieces/manual/monero-glossary}
+
+\fi
+
+\ifx\ProjectOff\undefined
+\chapter{Monero Project}
+\section{RPC Documentation}
+	\input{./chapter/monero-project/rpc.tex}
+\section{API}
+	\input{./chapter/monero-project/api.tex}
+\fi
+
+\ifx\ExperimentOff
+\chapter{Experiment On RingCT}
+	\input{./chapter/experiment/experiment.tex}
+\fi
+
+\ifx\BlogSeriesOff\undefined
+\chapter{Blog Series about XMR}
+\section{Interesting Sites}
+	\begin{itemize}
+		\item \url{https://moneroeric.com/monero-sites/}
+		\item \url{https://monero.stackexchange.com/}
+	\end{itemize}
+\section{Understanding Monero Cryptography, Privacy -- Introduction}
+	\input{./chapter/blog-series/crypto-privacy-intro-liugui1111.tex}
+\section{Understanding Monero Cryptography, Privacy Part 2 -- Stealth Addresses}
+	\input{./chapter/blog-series/crypto-privacy-stealth-address-liugui1111.tex}
+\section{Borromean Ring Signature原理}
+	\input{./chapter/blog-series/borromean-sig.tex}
+\section{Mix-ins Construction}
+	\input{./chapter/blog-series/mix-ins-selection.tex}
+\section{RCT implementation}
+	\input{./chapter/blog-series/rct-impl-in-monero}
+\section{StackExchange Series}
+\subsection{Important contributors to monero project}
+	\begin{itemize}
+		\item \href{https://github.com/vtnerd}{vtnerd}
+	\end{itemize}
+\subsection{About Commitment}
+	\begin{itemize}
+		\item \href{https://monero.stackexchange.com/questions/3638/how-are-outpk-mask-and-amount-fields-created-when-spending-rignct-coinbase-txs/3639#3639}{How are outPk, mask and amount fields created when spending RignCT coinbase txs}
+		\item \href{https://monero.stackexchange.com/questions/3348/what-are-3-types-of-ring-ct-transactions}{What are 3 types of Ring CT transactions} answered by \href{https://github.com/vtnerd}{vtnerd}
+	\end{itemize}
+\fi
+
+\end{document}

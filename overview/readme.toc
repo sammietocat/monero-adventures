@@ -1,0 +1,45 @@
+\select@language {english}
+\contentsline {chapter}{\numberline {1}Overview}{2}{chapter.1}
+\contentsline {chapter}{\numberline {2}Monero Project}{3}{chapter.2}
+\contentsline {section}{\numberline {2.1}RPC Documentation}{3}{section.2.1}
+\contentsline {subsection}{\numberline {2.1.1}Wallet}{3}{subsection.2.1.1}
+\contentsline {subsubsection}{wallet\_rpc\_server}{3}{subsection.2.1.1}
+\contentsline {section}{\numberline {2.2}API}{3}{section.2.2}
+\contentsline {subsubsection}{proveRctMG}{3}{section.2.2}
+\contentsline {subsubsection}{proveRctMGSimple}{4}{Item.7}
+\contentsline {subsubsection}{MLSAG\_Gen}{5}{Item.11}
+\contentsline {subsubsection}{construct\_tx\_and\_get\_tx\_key}{6}{Item.23}
+\contentsline {subsubsection}{ }{7}{Item.47}
+\contentsline {chapter}{\numberline {3}Blog Series about XMR}{8}{chapter.3}
+\contentsline {section}{\numberline {3.1}Interesting Sites}{8}{section.3.1}
+\contentsline {section}{\numberline {3.2}Understanding Monero Cryptography, Privacy -- Introduction}{8}{section.3.2}
+\contentsline {subsection}{\numberline {3.2.1}What is Elliptic Curve Cryptography?}{9}{subsection.3.2.1}
+\contentsline {subsubsection}{I believe the only things you need to know to proceed are:}{10}{figure.caption.4}
+\contentsline {subsection}{\numberline {3.2.2}The Monero Curve and Private and Public ``Keys''}{10}{subsection.3.2.2}
+\contentsline {subsection}{\numberline {3.2.3}Monero Accounts and Addresses}{12}{subsection.3.2.3}
+\contentsline {section}{\numberline {3.3}Understanding Monero Cryptography, Privacy Part 2 -- Stealth Addresses}{13}{section.3.3}
+\contentsline {subsection}{\numberline {3.3.1}ECDH}{14}{subsection.3.3.1}
+\contentsline {subsection}{\numberline {3.3.2}Stealth Addresses}{15}{subsection.3.3.2}
+\contentsline {subsubsection}{Alright, so let's actually create a stealth address!}{17}{Item.95}
+\contentsline {subsubsection}{Now let's look at Bob's perspective:}{17}{Item.100}
+\contentsline {subsubsection}{Some notes:}{17}{Item.107}
+\contentsline {subsubsection}{Bob's Additional Steps}{18}{Item.111}
+\contentsline {subsection}{\numberline {3.3.3}FUN}{18}{subsection.3.3.3}
+\contentsline {subsubsection}{Preliminary}{19}{figure.caption.10}
+\contentsline {subsubsection}{Alice}{19}{lstnumber.-1.23}
+\contentsline {subsubsection}{Bob}{20}{lstnumber.-2.13}
+\contentsline {subsubsection}{Bob's additional steps}{20}{lstnumber.-3.6}
+\contentsline {section}{\numberline {3.4}Borromean Ring Signature原理}{21}{section.3.4}
+\contentsline {subsection}{\numberline {3.4.1}签名}{21}{subsection.3.4.1}
+\contentsline {subsection}{\numberline {3.4.2}验签}{21}{subsection.3.4.2}
+\contentsline {section}{\numberline {3.5}Mix-ins Construction}{22}{section.3.5}
+\contentsline {subsection}{\numberline {3.5.1}Notations}{22}{subsection.3.5.1}
+\contentsline {subsection}{\numberline {3.5.2}About the global output index}{22}{subsection.3.5.2}
+\contentsline {subsection}{\numberline {3.5.3}Workflow}{23}{subsection.3.5.3}
+\contentsline {section}{\numberline {3.6}RCT implementation}{23}{section.3.6}
+\contentsline {subsection}{\numberline {3.6.1}Overview}{23}{subsection.3.6.1}
+\contentsline {subsection}{\numberline {3.6.2}Simple Ring-CT}{23}{subsection.3.6.2}
+\contentsline {subsection}{\numberline {3.6.3}Full Ring-CT}{25}{subsection.3.6.3}
+\contentsline {section}{\numberline {3.7}StackExchange Series}{26}{section.3.7}
+\contentsline {subsection}{\numberline {3.7.1}Important contributors to monero project}{26}{subsection.3.7.1}
+\contentsline {subsection}{\numberline {3.7.2}About Commitment}{27}{subsection.3.7.2}

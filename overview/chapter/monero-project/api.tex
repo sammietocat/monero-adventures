@@ -1,0 +1,209 @@
+Every column of the key matrix will consist of keys from a single person in this part.
+\subsubsection{proveRctMG}\label{proveRctMG}
+	\begin{description}
+		\item[Input]  
+			\begin{itemize}
+				\item \(msg\): message to sign
+				\item \(\mathbf{inPk}=\Big[(pk_{j,i},c_{j,i})\Big]_{m\times n}\): input public key matrix of \(m\) rows and \(n\) columns
+				\item \(\mathbf{inSk}=\left((sk_1,x_1^c),\dots,(sk_j,x_j^c),\dots,(sk_m,x_m^c)\right)\): input secret key vector of size \(m\)
+				\item \(\mathbf{outSk}=(y_1,\dots,y_k,\dots,y_{m'})\): output secret key vector of size \(m'\)
+				\item \(\mathbf{outPk}=\left((\hat{pk}_1,\hat{c}_1),\dots,(\hat{pk}_k,\hat{c}_k),\dots,(\hat{pk}_{m'},\hat{c}_{m'})\right)\): output public key vector of size \(m'\)
+				\item \(\pi\): the column index of public key matrix corresponds to the secret key vector \(\mathbf{inSk}\)
+				\item \(bH\): i.e. key for transaction fee of amount \(b\) is the paper
+			\end{itemize}
+		\item[Ouput] the multi-layer ring signature of the input message \(msg\)
+		\item[Procedure]
+			\begin{enumerate}
+				\item for \(i=1,\dots,(m+1)\), \(sk_i^*=0\), where \(sk^*\) is a vector of key
+				\item initialize a key matrix as 
+					\[
+						\mathbf{M}=\begin{bmatrix}
+							I_1 &\dots &I_1 \\
+							\vdots &\vdots &\vdots \\
+							I_j &\dots &I_j \\
+							\vdots &\vdots &\vdots \\
+							I_{m+1} &\dots &I_{m+1}
+						\end{bmatrix}_{(m+1)\times n}
+					\]
+					where vector \(I=(1,0,0,\dots,0)\) of length 32 is a key corresponding to the zero elliptic curve point
+				\item update \(\mathbf{M}\) as  
+					\[
+						\mathbf{M}=\begin{bmatrix}
+							pk_{1,1} &\dots &pk_{1,i} &\dots &pk_{1,n} \\
+							 \vdots &\vdots &\vdots &\vdots &\vdots &\\
+							pk_{j,1} &\dots &pk_{j,i} &\dots &pk_{j,n} \\
+							 \vdots &\vdots &\vdots &\vdots &\vdots &\\
+							pk_{m,1} &\dots &pk_{m,i} &\dots &pk_{m,n} \\
+							\sum_{j=1}^{m}c_{j,1} &\dots &\sum_{j=1}^{m}c_{j,i} &\dots &\sum_{j=1}^{m}c_{j,n}
+						\end{bmatrix}_{(m+1)\times n}
+					\]
+				\item update \(sk^*=(sk_1,\dots,sk_j,\dots,sk_m,\sum_{j=1}^m sk_j)\)
+				\item update \(\mathbf{M}\) as  
+					\[
+						\mathbf{M}=\begin{bmatrix}
+							pk_{1,1} &\dots &pk_{1,i} &\dots &pk_{1,n} \\
+							 \vdots &\vdots &\vdots &\vdots &\vdots &\\
+							pk_{j,1} &\dots &pk_{j,i} &\dots &pk_{j,n} \\
+							 \vdots &\vdots &\vdots &\vdots &\vdots &\\
+							pk_{m,1} &\dots &pk_{m,i} &\dots &pk_{m,n} \\
+							\dots &\dots &\sum_{j=1}^{m}c_{j,1}-\sum_{k=1}^{m'}\hat{c}_k-bH  &\dots &\sum_{j=1}^{m}c_{j,n}-\sum_{k=1}^{m'}\hat{c}_k-bH 
+						\end{bmatrix}_{(m+1)\times n}
+					\]
+				\item update \(sk^*=(sk_1,\dots,sk_j,\dots,sk_m,\sum_{j=1}^m sk_j-\sum_{k=1}^{m'}y_k)\)
+				\item hand over \(msg\), \(\mathbf{M}\), \(sk^*\), \(\pi\) and \(m\) to function \texttt{MLSAG\_Gen}, (i.e., treat all public keys but the last as double-spendable) and return the signature by \texttt{MLSAG\_Gen}
+			\end{enumerate}
+	\end{description}
+\subsubsection{proveRctMGSimple} 
+	\begin{description}
+		\item[Input]
+			\begin{itemize}
+				\item \(msg\): message to sign
+				\item \(inPK=\left((pk_1,c_1),(pk_2,c_2),\dots,(pk_m,c_m)\right)\): input public key vector of length \(n\), where \(pk_i\) is the public key, and \(c_i\) is the commitment
+				\item \(inSK=(sk,x^c)\): input secret key, where \(sk\) is the actual secret key, and \(x^c\) is the mask key
+				\item \(y\): output secret key, i.e. the mask value
+				\item \(\hat{c}\): output public key, i.e., the output commitment
+				\item \(\pi\): index of the public key in \(inPK\) paired with \(inSK\)
+			\end{itemize}
+		\item[Ouput] the simple(one-layer) ring signature of the input message \(msg\)
+		\item[Procedure]
+			\begin{enumerate}
+				\item initialize \(\mathbf{M}=[ ]_{2\times n}\), a \(2\times n\) matrix
+				\item update 
+					\[
+						\mathbf{M}=
+						\begin{bmatrix}
+							\dots &pk_i &\dots \\
+							\dots &c_i &\dots
+						\end{bmatrix}
+					\]
+					and then
+					\[
+						\mathbf{M}=
+						\begin{bmatrix}
+							\dots &pk_i &\dots \\
+							\dots &c_i-\hat{c} &\dots
+						\end{bmatrix}
+					\]
+				\item estimate \(sk^*=(sk,sk-y)\)
+				\item hand over \(msg\), \(\mathbf{M}\), \(sk^*\), \(\pi\) and \(1\) to function \texttt{MLSAG\_Gen}, (i.e., treat all public keys but the last as double-spendable) and return the signature by \texttt{MLSAG\_Gen}
+			\end{enumerate}
+	\end{description}
+\subsubsection{MLSAG\_Gen} 
+	\begin{description}
+		\item[Input]
+			\begin{itemize}
+				\item \(msg\): message to sign
+				\item \(\mathbf{Y}=\Big[y_{j,i}\Big]_{m\times n}\): the public key matrix of \(m\) rows and \(n\) columns
+				\item \(\mathbf{x}=(x_1,x_2,\dots,x_m)\): the secret key vector of length \(m\) from the singer 
+				\item \(\pi\): the column index of public key matrix corresponds to the secret key vector \(\mathbf{x}\)
+				\item \(m'\): the number of double spendable rows, should satisfy \(m'<m\)
+			\end{itemize}
+		\item[Output] signature as \( (I_1,\dots,I_m,c_1,\mathbf{S}=[s_{j,i}]_{m\times n})\) where \(I_j\) is the key image, \(c_1\) is the first hash (treated as a scalar) in the ring, and \(\mathbf{S}\) is the scalar matrix of randomly generated to make up the ring. (c.f.g struct \texttt{mgSig} in the \texttt{rctTypes.h})
+		\item[Procedure]
+			\begin{enumerate}
+				\item for \(j\leftarrow 1,\dots,m'\), generate \(\alpha_j\) randomly and estimate 
+					\begin{itemize}
+						\item \(L_j\leftarrow\alpha_i G\)
+						\item \(H_{P_j}\leftarrow hashToPoint(Y_{j,\pi})\)
+						\item \(R_j \leftarrow \alpha_j H_{P_j}\)
+						\item \(I_j\leftarrow x_j H_{P_j}\)
+					\end{itemize}
+				\item for \(j\leftarrow(m'+1),\dots,m\), generate \(\alpha_j\) randomly and estimate \(L_j\leftarrow\alpha_i G\)
+				\item calculate \(c_{old}\leftarrow H(msg,Y_{1,\pi},L_j,R_j,\dots,Y_{m',\pi},L_{m'},R_{m'},Y_{(m'+1),\pi},L_{(m'+1)},\dots,Y_{m,\pi},L_{m})\)
+				\item initialize \(i\leftarrow(\pi+1)\bmod n\), if \(i=0\), set \(c_1\leftarrow c_{old}\)
+				\item for \(i\leftarrow(\pi+1),\dots,n,1,\dots,(\pi-1)\)
+					\begin{enumerate}
+						\item generate \(s_{j,i}\) randomly for \(j\leftarrow1,\dots,m\)
+						\item for \(j\leftarrow1,\dots,m'\), calculate
+							\begin{itemize}
+								\item \(L_j\leftarrow s_{j,i} G+c_{old} Y_{j,i}\)
+								\item \(R_j \leftarrow s_{j,i} hashToPoint(Y_{j,i}) + c_{old} I_{j}\)
+							\end{itemize}
+						\item for \(j\leftarrow(m'+1),\dots,m\), estimate \(L_j\leftarrow s_{j,i} G+c_{old} Y_{j,i}\)
+						\item update \(c\leftarrow H(msg,Y_{1,i},L_j,R_j,\dots,Y_{m',i},L_{m'},R_{m'},\dots,Y_{(m'+1),i},L_{(m'+1)},\dots,Y_{m,i},L_{m})\)
+						\item increment \(i\leftarrow(i+1)\bmod n\), if \(i=0\), set \(c_1\leftarrow c_{old}\)
+						\item update \(c_{old}\leftarrow c\)
+					\end{enumerate}
+				\item update \(s_{j,\pi}\leftarrow\alpha_j-c x_j\)
+			\end{enumerate}
+	\end{description}
+\subsubsection{construct\_tx\_and\_get\_tx\_key} 
+	\begin{description}
+		\item[Input]
+			\begin{itemize}
+				\item \(\mathbf{ack}\): account key of the payer, consisting of two seckey-pubkey pairs as \( (a,A=a\cdot G)\) for viewing and \( (b,B=b\cdot G)\) for spending
+				\item \(\mathbf{inCoin}=\{inCoin_i=(amt_i,\{(P_{i,j},C_{i,j},o_{i,j})\}_{j=1}^{l_i},R_i,k_i,k_i')\}_{i=1}^m\): input coin ring vector, where for each \(inCoin_i\)
+					\begin{itemize}
+						\item \(amt_i\) is the amount of the real input coin
+						\item \(P_{i,j}\) is the one-time address of the j-th coin
+						\item \(C_{i,j}\) is the commitment of amount of the j-th coin
+						\item \(o_{i,j}\) is the global output index of the j-th coin
+						\item \(R_i\) is the key for the tx producing the real input coin
+						\item \(k_i\) is the index of the real input coin
+						\item \(k_i'\) is the index of the real input coin in the tx containing it
+					\end{itemize}
+				\item \(\mathbf{outDest}=\{(\hat{amt}_j,A_j,B_j)\}\): output destination vector, where for the j-th destination, \(\hat{amt}_j\) is the amount to send, \(A_j\) is the public key for viewing, and \(B_j\) is the public key for spending
+					\item \(extra\): extra field storing payment ID, public tx key, etc
+			\end{itemize}
+		\item[Output] 
+			\begin{itemize}
+				\item \(\mathbf{tx}\): the constructed tx with RCT signature set up
+			\end{itemize}
+		\item[Procedure]
+			\begin{enumerate}
+				\item generate a tx key pair \( (r,R=r\cdot G)\)
+				\item remove pubkeys in \(extra\) if any and add \(R\) to \(extra\)
+				\item encrypt the stealth payment ID if any in \(extra\) with \(r\cdot A\)
+				\item For each \(inCoin_i\),
+					\begin{itemize}
+						\item derive the address key pair \( (x_i^*,P_i^*)=(H_s(a\cdot R_i||k_i')+b, H_s(a\cdot R_i||k_i')\cdot G+B)\) and key image \(I_i=x_i^*\cdot H_p(P_i^*)\)
+						\item ensure if \(P_i^*\) is equal to the one \(P_{i,k_1}\) specified in \(inCoin_i\)
+						\item make an input entry as \( inToKey_i=(amt_i^*,I_i,\{o_{i,1}^*=o_{i,1},o_{i,2}^*=o_{i,2}-o_{i,1},\dots,o_{i,j}^*=o_{i,j}-o_{i,j-1},\dots\}\)
+					\end{itemize}
+				\item sort \(outDest_i\in\mathbf{outDest}\) in ascending order of their amount
+				\item For each \(outDest_j\), 
+					\begin{itemize}
+						\item compute the amount key \(amtKey_j=H_s(r\cdot A_j||j)\)
+						\item calculate the one-time key \(\hat{P}_j=amtKey_j\cdot G+B_j\)
+						\item make an output coin as \(outCoin_j=(\hat{amt}_j,\hat{P}_j)\)
+					\end{itemize}
+				\item assert \(\sum amt_i>\sum\hat{amt}_j\)
+				\item If the number \(m>1\) of input coin ring, use simple RCT, or else use the full one
+					\begin{itemize}
+						\item For simple RCT,
+							\begin{enumerate}
+								\item \(\bM=[]_{1\times m}\)
+								\item compute the real input amount key and commitment \(\{(x_i,C_i)\}_{i=1}^m\)
+								\item update the i-th column of \(\bM\) as \(M_i=[(P_{i,j},C_{i,j})]_{j=1}^{l_i}\)
+								\item save a copy \(\{amt_i^*\}\) of input amount \(\{amt_i\}\)
+								\item save a copy \(\{\hat{amt}_j^*\}\) of output amount \(\{\hat{amt}_j\}\)
+								\item mask the amount in inputs \(inToKey_i\) and outputs \(outCoin_j\) by zeroing them
+								\item compute the hash \(h_{pre}\) of the tx prefix including the version, unlock time, \(\{inToKey_i\}\), \(\{outCoin_j\}\) and extra nonces
+								\item  delegate the signing job to \code{rct::genRctSimple} with message \(h_{pre}\), input secret key vector \(\{(x_i,C_i)\}\), destination \(\{outCoin_j\}\), input amount \(\{amt_i^*\}\), output amount vector \(\{\hat{amt}_j^*\}\), tx fee (\(\sum amt_i^*-\sum \hat{amt}_j^*\)), mix-in matrix \(\bM\), amount key vector \(\{amtKey_i\}\), real input index \(\{k_i\}\) and get back mask values and MLSAG
+							\end{enumerate}
+						\item For non-simple RCT,
+							\begin{enumerate}
+								\item \(\bM=[]_{1\times l_1}\)
+								\item \(\bM=[(P_{1,i},C_{1,i})]_{1\times l_1}\)
+								\item save a copy \(\{amt_i^*\}\) of input amount \(\{amt_i\}\)
+								\item save a copy \(\{\hat{amt}_j^*\}\) of output amount \(\{\hat{amt}_j\}\)
+								\item append tx fee (\(amt_1^*-\sum \hat{amt}_j^*\)) to \(\{\hat{amt}_j^*\}\)
+								\item mask the amount in inputs \(inToKey_i\) and outputs \(outCoin_j\) by zeroing them
+								\item compute the hash \(h_{pre}\) of the tx prefix including the version, unlock time, \(\{inToKey_i\}\), \(\{outCoin_j\}\) and extra nonces
+								\item  delegate the signing job to \code{rct::genRct} with message \(h_{pre}\), input secret key vector \((x_1,C_1)\), destination \(\{outCoin_j\}\), output amount vector \(\{\hat{amt}_j^*\}\), mix-in matrix \(\bM\), amount key vector \(\{amtKey_i\}\), real input index \(k_1\) and get back mask values and MLSAG
+							\end{enumerate}
+					\end{itemize}
+			\end{enumerate}
+	\end{description}
+\subsubsection{ } 
+	\begin{description}
+		\item[Input]
+			\begin{itemize}
+				\item 
+			\end{itemize}
+		\item[Output]
+		\item[Procedure]
+			\begin{enumerate}
+				\item 
+			\end{enumerate}
+	\end{description}
