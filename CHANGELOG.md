@@ -3,6 +3,7 @@
 ## [2017-09-22]  
 + **Added**  
 	- `notations.pdf` to specifying the common notations for convenience  
+	- done the Borromean ring signatures  
 
 ## [2017-09-21]  
 + **Added**  
