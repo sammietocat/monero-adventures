@@ -126,7 +126,7 @@ A visualization of the whole scheme is as \figurename~\ref{fig-borromean-ring-si
 \end{figure}
 
 \section{Implementation in Monero}
-Summarized from the official codebase \cite{monero-project-codebase} as Algorithm~\ref{borromean-signing-in-monero} and ~\ref{borromean-verification-in-monero}, where it commits on empty hash digest \(M\) and include no indices \( (i,j)\) in calculating \(e_{i,j}\).
+Summarized from the official codebase \cite{monero-project-codebase} as Algorithm~\ref{borromean-signing-in-monero} and ~\ref{borromean-verification-in-monero}, where \textcolor{red}{it commits on empty hash digest \(M\) and include no indices \( (i,j)\) in calculating \(e_{i,j}\)}.
 \begin{algorithm}
 	\DontPrintSemicolon
 	\Input{\(\vec{x}\): set of secret keys \(\{x_i\}_{i=1}^{63}\)}
@@ -143,17 +143,16 @@ Summarized from the official codebase \cite{monero-project-codebase} as Algorith
 			\(L_{i,1}\leftarrow s_{i,1}\cdot G+s_{i,1}\cdot P_{i,1}\)\;
 		}
 	}
-	\(e_{i,0}\leftarrow H_s(L_{0,1}\|L_{1,1}\|\cdots\|L_{63,1})\)\;
+	\(e_0\leftarrow H_s(L_{0,1}\|L_{1,1}\|\cdots\|L_{63,1})\)\;
 	\For{\(i\leftarrow 0\) \KwTo \(63\)}{ 
 		\eIf{\(j_i^*=0\)}{
-			\(s_{i,0}=k_i-x_i\cdot e_i\)\;
+			\(s_{i,0}=k_i-x_i\cdot e_0\)\;
 		}{
 			\(s_{i,0}\in_u R\)\;
-			\(L_{i,0}\leftarrow H_s(s_{i,0}\cdot G+e_{i,0}\cdot P_{i,0})\)\;
-			\(s_{i,1}\leftarrow k_i-x_j\cdot L_{i,0}\)\;
+			\(L_{i,0}\leftarrow s_{i,0}\cdot G+e_0\cdot P_{i,0}\)\;
+			\(s_{i,1}\leftarrow k_i-x_i\cdot H_s(L_{i,0})\)\;
 		}
 	}
-	\(e_0\leftarrow e_{i,0}\)\;
 	\caption{The Implementation of Signing for Borromean Ring Signatures in Monero}\label{borromean-signing-in-monero}
 \end{algorithm}
 \begin{algorithm}
