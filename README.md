@@ -5,3 +5,6 @@ This project serves to share notes from personal reviewing the codebase and pape
 
 ## Series  
 + [Borromean ring signatures](borromean-ring-signatures.pdf)  
+
+## Work In Progress  
++ [Stealth address](stealth-address.pdf)   

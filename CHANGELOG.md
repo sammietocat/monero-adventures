@@ -3,7 +3,8 @@
 ## [2017-09-22]  
 + **Added**  
 	- `notations.pdf` to specifying the common notations for convenience  
-	- done the Borromean ring signatures  
+	- done the Borromean ring signatures   
+	- part of stealth address in `stealth-address.pdf`  
 
 ## [2017-09-21]  
 + **Added**  
