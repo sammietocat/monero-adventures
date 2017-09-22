@@ -32,8 +32,8 @@
 \begin{document}
 \maketitle
 
-Monero is a project consists of several components as follows, \par
-\begin{minipage}{\linewidth}
+Monero is a project consists of several components as \figurename~\ref{fig-monero-components}\par
+\begin{figure}[!htbp]
 	\centering
 	\begin{tikzpicture}[mindmap,every node/.style=concept,concept color=black!20,
 			grow cyclic,
@@ -44,17 +44,18 @@ Monero is a project consists of several components as follows, \par
 				child {node {Ring Signatures}}
 				child {node {Stealth Addresses}}
 				child {node {Pedersen Commitments}
-					child {node {Borromean Signatures}}
+					child {node {Borromean Ring Signatures}}
 				}
 				child {node {PoW}};
 	\end{tikzpicture}
-\end{minipage}
+	\caption{Components of Monero}\label{fig-monero-components}
+\end{figure}
 roles of which are respectively,
 	\begin{itemize}
 		\item PoW
 		\item Pedersen Commitments: amount obfuscation
 			\begin{itemize}
-				\item \href{./borromean-signatures.pdf}{Borromean Signatures}: space saving
+				\item \href{./borromean-ring-signatures.pdf}{Borromean Ring Signatures}: space saving
 			\end{itemize}
 		\item Stealth Addresses: recipient privacy
 		\item Ring Signatures: sender privacy

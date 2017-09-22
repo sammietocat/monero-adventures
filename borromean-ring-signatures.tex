@@ -1,6 +1,7 @@
 %!TEX program=xelatex
 \documentclass[a4paper,10pt]{article}
 
+\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
 \usepackage{amsmath}
 \usepackage[backend=biber,style=alphabetic]{biblatex}
 %\usepackage{ctex}
@@ -10,7 +11,7 @@
 \usepackage{indentfirst}
 \usepackage{tikz}
 
-\title{Borromean Signatures}
+\title{Borromean Ring Signatures}
 \author{Sammy, Hao Xu}
 \date{2017-09-21}
 
@@ -22,6 +23,13 @@
     filecolor=magenta,      
     urlcolor=cyan,
 }
+\renewcommand{\vec}[1]{\mathbf{#1}}
+% setting for algorithms
+\SetKwProg{Fn}{}{}{}
+\SetKwFunction{FnSigning}{Signing}
+\SetKwInOut{Input}{input}
+\SetKwInOut{Output}{output}
+% end setting for algorithms
 \usetikzlibrary{arrows,decorations.pathmorphing,positioning,fit,mindmap,petri}
 
 \begin{document}
@@ -36,28 +44,28 @@ Suppose a signer has a collection of verification keys $P_{i,j}$ for $0\leq i\le
 	\item For each $0\leq i\leq n-1$:
 		\begin{enumerate}
 			\item Choose a scalar $k_i$ uniformly at random.
-			\item Set $R_{i,j^*} = k_iG$.
+			\item Set $L_{i,j^*} = k_iG$.
 			\item For $j$ such that $j^*_i+1\leq j\leq m_i - 1$ choose $s_{i,j}$ at random and compute\label{comp1}
 				\begin{eqnarray}
-					e_{i,j} &= &H(M\| R_{i,j-1} \| i \| j - 1)	\\
-					R_{i,j} &= &s_{i,j}G - e_{i,j}P_{i,j}
+					e_{i,j} &= &H(M\| L_{i,j-1} \| i \| j - 1)	\\
+					L_{i,j} &= &s_{i,j}G - e_{i,j}P_{i,j}
 				\end{eqnarray}
 		\end{enumerate}
 	\item Finally, set 
 			\[ 
-				e_{i,0} = H(R_{0,m_0-1} \| \cdots \| R_{n-1,m_{n-1}-1}) 
+				e_{i,0} = H(L_{0,m_0-1} \| \cdots \| L_{n-1,m_{n-1}-1}) 
 			\] 
 			That is, $e_{i,0}$ commits to several $(s, P)$ pairs, one from each ring.
 	\item For each $0\leq i\leq n-1$:
 		\begin{enumerate}
-			\item Let \(R_{i,-1}=R_{i,m_i-1}\)
+			\item Let \(L_{i,-1}=L_{i,m_i-1}\)
 			\item For $j$ such that $0\leq j\leq j^*_i - 1$ choose $s_{i,j}$ at random and compute 
 				\begin{eqnarray}
-					R_{i,j} &= &s_{i,j}G-e_{i,j}P_{i,j} \\
-					e_{i,j+1} &= &H(M\| R_{i,j}\|i\|j) 
+					L_{i,j} &= &s_{i,j}G-e_{i,j}P_{i,j} \\
+					e_{i,j+1} &= &H(M\| L_{i,j}\|i\|j) 
 				\end{eqnarray}
 				Note that this calculation is identical to the one in Step $\ref{comp1}$.
-			\item To wrap around making \(R_{i,j_i^*}=s_{i,j}G-e_{i,j_i^*}P_{i,j_i^*}\), we should set
+			\item To wrap around making \(L_{i,j_i^*}=s_{i,j}G-e_{i,j_i^*}P_{i,j_i^*}\), we should set
 				\begin{equation}
 					s_{i,j_i^*}=k_i+x_i e_{i,j_i^*}
 				\end{equation}
@@ -82,14 +90,14 @@ We assume we have a message $m$, a collection $\{ P_{i,j} \}$ of verification ke
 			\begin{enumerate}
 				\item For each $0\leq j\leq m_i - 1$, compute 
 					\begin{eqnarray}	
-						R_{i,j} = s_{i,j}G - e_{i,j}P_{i,j} \\
-						e_{i,j+1} = H(M\|R_{i,j}\|i\|j) 
+						L_{i,j} = s_{i,j}G - e_{i,j}P_{i,j} \\
+						e_{i,j+1} = H(M\|L_{i,j}\|i\|j) 
 					\end{eqnarray}	
 					(As before, we always take $e_{i,0}$ to be $e_0$.)
 			\end{enumerate}
 	\item Compute 
 			\begin{equation}
-				e_0' = H(M\|R_{0,m_0-1} \|\cdots \| R_{n-1,m_{n-1}-1})
+				e_0' = H(M\|L_{0,m_0-1} \|\cdots \| L_{n-1,m_{n-1}-1})
 			\end{equation}
 			and return 1 iff $e_0'\stackrel{?}{=} e_0$.
 \end{enumerate}
@@ -118,7 +126,50 @@ A visualization of the whole scheme is as \figurename~\ref{fig-borromean-ring-si
 \end{figure}
 
 \section{Implementation in Monero}
-Summarized from the official codebase \cite{monero-project-codebase}.
-
+Summarized from the official codebase \cite{monero-project-codebase} as Algorithm~\ref{borromean-signing-in-monero} and ~\ref{borromean-verification-in-monero}, where it commits on empty hash digest \(M\) and include no indices \( (i,j)\) in calculating \(e_{i,j}\).
+\begin{algorithm}
+	\DontPrintSemicolon
+	\Input{\(\vec{x}\): set of secret keys \(\{x_i\}_{i=1}^{63}\)}
+	\Input{\(\{\vec{P}_i\}\): set of pubkey rings, where \(\{\vec{P}_i=(P_{i,0},P_{i,1})\}\)}
+	\Input{\(\{j_i^*\}\): indices set, s.t., for each pair \( (x_i,\vec{P}_i)\), \(P_{i,j_i^*}=x_i\cdot G\) for \(i=0,1,\dots,63\)}
+	\Output{\(\sigma=(e_0,\{(s_{i,0},s_{i,1})\})\): \(e_0\) is a derived scalar, \(s_{i,0}, s_{i,1}\in_u R\)}
+	
+	\BlankLine
+	\For{\(i\leftarrow 0\) \KwTo \(63\)}{
+		\(k_i\in_u R\)\;
+		\(L_{i,j_i^*}\leftarrow k_i\cdot G\)\;
+		\If{\(j_i^*=0\)}{
+			\(s_{i,1}\in_u R\)\;
+			\(L_{i,1}\leftarrow s_{i,1}\cdot G+s_{i,1}\cdot P_{i,1}\)\;
+		}
+	}
+	\(e_{i,0}\leftarrow H_s(L_{0,1}\|L_{1,1}\|\cdots\|L_{63,1})\)\;
+	\For{\(i\leftarrow 0\) \KwTo \(63\)}{ 
+		\eIf{\(j_i^*=0\)}{
+			\(s_{i,0}=k_i-x_i\cdot e_i\)\;
+		}{
+			\(s_{i,0}\in_u R\)\;
+			\(L_{i,0}\leftarrow H_s(s_{i,0}\cdot G+e_{i,0}\cdot P_{i,0})\)\;
+			\(s_{i,1}\leftarrow k_i-x_j\cdot L_{i,0}\)\;
+		}
+	}
+	\(e_0\leftarrow e_{i,0}\)\;
+	\caption{The Implementation of Signing for Borromean Ring Signatures in Monero}\label{borromean-signing-in-monero}
+\end{algorithm}
+\begin{algorithm}
+	\DontPrintSemicolon
+	\Input{\(\{\vec{P}_i\}\), set of pubkey rings, where \(\{\vec{P}_i=(P_{i,0},P_{i,1})\}_{i=1}^{63}\)}
+	\Input{\(\sigma=(e_0,\{(s_{i,0},s_{i,1})\})\), a signature generated by Algorithm~\ref{borromean-signing-in-monero}}
+	\Output{true in case the verification is passed, and false otherwise}
+	
+	\BlankLine
+	\For{\(i\leftarrow 0\) \KwTo \(63\)}{
+		\(L_{i,0}\leftarrow s_{i,0}\cdot G+e_0\cdot P_{i,0}\)\;
+		\(L_{i,1}\leftarrow s_{i,1}\cdot G+H_s(L_{i,0})\cdot P_{i,1}\)\;
+	}
+	\(\hat{e_0}\leftarrow H_s(L_{0,1}\|L_{1,1}\|\cdots\|L_{63,1})\)\;
+	\Return \(\hat{e_0}=e_0\)\;
+	\caption{The Implementation of Verification for Borromean Ring Signatures in Monero}\label{borromean-verification-in-monero}
+\end{algorithm}
 \printbibliography
 \end{document}
