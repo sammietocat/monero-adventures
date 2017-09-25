@@ -38,14 +38,13 @@ Stealth addressing is a technique whereby a \textbf{sender} can take a \textbf{r
 Using stealth addressing, a recipient can publish one address and receive unlimited publicly unlinkable payments.
 \section{Requisites -- ECDH}
 \href{https://en.wikipedia.org/wiki/Elliptic_curve_Diffie%E2%80%93Hellman}{Elliptic Curve Diffie-Hellman} is a variant of the original \href{https://en.wikipedia.org/wiki/Diffie%E2%80%93Hellman_key_exchange}{Diffie-Hellman} key agreement protocol extended for use with \href{https://en.wikipedia.org/wiki/Elliptic_curve_cryptography}{ECC}. In simple terms, two parties can independently generate a shared secret over an unsecured connection (implying that no observer can discover the secret by simply watching their communication). \par
-	Suppose the two parties to share secret keys are Alice and Bob, and their \((sk,pk)\) pair are \( (a,A=a\cdot G)\) and \( (b,B=b\cdot G)\) respectively, where \(G\) is a base point of the EC employed.\par
+	Suppose the two parties to share secret keys are Alice and Bob, and their \((sk,pk)\) pair are \( (a,A=a\cdot G)\) and \( (b,B=b\cdot G)\) respectively, where \(G\) is a base point of the EC employed. Then to share a secret key, they can interact with each other as \figurename~\ref{fig-ecdh}. \par
 \begin{figure}[!htbp]
 	\centering
-	\begin{tikzpicture}[auto,
-		place/.style={rectangle,draw},
-		marrow/.style={->,thick}]
-		\node [place,rounded corners,inner sep=2mm] (alice) {Alice};
-		\node [place,rounded corners,inner sep=2mm] (bob) [right=4cm of alice]  {Bob};
+	\begin{tikzpicture}[auto, place/.style={rectangle,draw}, marrow/.style={->,thick}]
+
+		\node (alice) {\includegraphics[height=16mm]{images/alice.png}};
+		\node (bob) [right=32mm of alice] {\includegraphics[height=16mm]{images/bob.png}};
 
 		\node (A-send) [below=of alice] {};
 		\node (A-recv) [below=of bob] {};
@@ -76,8 +75,79 @@ Using stealth addressing, a recipient can publish one address and receive unlimi
 		\draw [marrow] (bob) to (C-pi-calc);
 		\draw [-,dashed] (C-pi-calc) to (bob-end);
 	\end{tikzpicture}
-	\caption{Workflow of ECDH}
+	\caption{Workflow of ECDH}\label{fig-ecdh}
 \end{figure}
 And the final shared secret key is \(C=C'\).
+
+\section{Concrete Algorithm}
+Suppose Alice wants to pay Bob, then the stealth address for Bob (assuming view key pair as \( (a,A)\) and spend key pair as \( (b,B)\)) to receive to the payment can be depicted as \figurename~\ref{fig-stealth-address-gen}.\par
+\begin{figure}[!htbp]
+	\centering
+	\begin{tikzpicture}[auto, place/.style={rectangle,draw}, marrow/.style={->,thick}]
+
+		\node (alice) {\includegraphics[height=32mm]{images/alice.png}};
+		\node (bob) [right=64mm of alice] {\includegraphics[height=32mm]{images/bob.png}};
+
+		\node (AB-send) [below=of bob] {};
+		\node (AB-recv) [below=of alice] {};
+
+		\node [place] (tx-key-gen) [below=of AB-recv,text width=36mm] {
+			randomly generate a tx key pair \( (r,R=r\cdot G)\)
+		};
+
+		\node (R-recv) at (tx-key-gen -| AB-send) { };
+
+		\node [place] (stealth-address-derivation-alice) [below=of tx-key-gen,text width=48mm] {
+			derive the stealth address as \(P=H_s(r\cdot A)\cdot G+B\)
+		};
+
+		\node [place] (stealth-address-derivation-bob) [below=of R-recv,text width=48mm] {
+			derive the stealth address as \(P'=H_s(a\cdot R)\cdot G+B\)
+		};
+
+		\node [place] (stealth-address-check) [below=of stealth-address-derivation-bob,text width=48mm] {
+			check if \( P'=P\), where true means Bob get paid
+		};
+
+		\node [place] (sk-derivation) [below=of stealth-address-check,text width=64mm] {
+			estimate the secret key for future signing as 
+			\( x=H_s(a\cdot R)+b\), where \(P=x\cdot G\)
+		};
+		\node [place] (double-spend-check) [below=of sk-derivation,text width=64mm] {
+			ensure the freshness of key images \(I=x\cdot H_p(P)\), i.e., \(I\) isn't on chain yet
+		};
+
+		\node (bob-done) [below=of double-spend-check] {};
+		\node (alice-done) at (stealth-address-derivation-alice |- bob-done) {};
+
+		% horizontal arrows
+		\draw [marrow] (AB-send) to node [align=center,swap] {\(A,B\)} (AB-recv);
+		\draw [marrow] (tx-key-gen) to node [align=center] {\(R\)} (R-recv);
+	
+		% vertical arrows
+		% alice part
+		\draw [marrow] (alice) to (tx-key-gen);
+		\draw [marrow] (tx-key-gen) to (stealth-address-derivation-alice);
+		\draw [-,dashed] (stealth-address-derivation-alice) to (alice-done);
+
+		% bob part
+		\draw [marrow] (bob) to (stealth-address-derivation-bob);
+		\draw [marrow] (stealth-address-derivation-bob) to (stealth-address-check);
+		\draw [marrow] (stealth-address-check) to (sk-derivation);
+		\draw [marrow] (sk-derivation) to (double-spend-check);
+		\draw [-,dashed] (double-spend-check) to (bob-done);
+	\end{tikzpicture}
+	\caption{Derivation of Stealth Address}\label{fig-stealth-address-gen}
+\end{figure}
+\section{Some notes}
+	\begin{itemize}
+		\item Computing \(r\cdot A\) and \(a\cdot R\) requires secret data: either \(r\) (Alice) or \(a\) (Bob). Thus, external observers are prevented from proceeding past calculating \( (r\cdot A)\). Furthermore, because \(r\) is randomly chosen, even if the observer suspects Alice is sending to Bob's public address (which the observer knows), due to the ECDLP they still can't link this address to \(P\) without knowledge of \(r\) or \(a\) (or pedantically the later steps' values, namely \(r\cdot G\) and \(H_s(r\cdot G)\)).
+		\item Back to the \textbf{dual-key} concept (\( (a,A)\) and \( (b,B)\)), Bob (or someone working on his behalf with knowledge of \(a\) and \(B\)) can ``scan'' for and detect/link outputs without knowledge of \(b\), which is required below to actually spend that output. The whitepaper calls \((a,B)\) the \textbf{``tracking key''}.
+		\item It is possible to do a non-dual-key stealth addressing scheme, but you must make one of two trade-offs. You can either: 
+			\begin{itemize}
+				\item use the concept in the whitepaper called a \textbf{truncated address}, which means the view key pair is publicly known and all incoming transactions can be linked (\(a = H_s(B)\)); or 
+				\item forego a view key pair entirely, which means scanning requires spending ability (\(P = H_s(rB)\cdot G + B)\)).
+			\end{itemize}
+	\end{itemize}
 
 \end{document}
