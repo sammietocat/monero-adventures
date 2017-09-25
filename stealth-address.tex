@@ -1,5 +1,6 @@
 \documentclass[a4paper,10pt]{article}
 
+\usepackage[backend=biber,style=alphabetic]{biblatex}
 \usepackage[margin=16mm]{geometry}
 \usepackage{hyperref}
 \usepackage{indentfirst}
@@ -9,8 +10,10 @@
 \author{Sammy}
 \date{2017-09-22}
 
+\addbibresource{REFERENCES.bib}
 \hypersetup{
     colorlinks=true,
+		citecolor=blue,
     linkcolor=blue,
     filecolor=magenta,      
     urlcolor=cyan,
@@ -21,6 +24,8 @@
 \begin{document}
 \maketitle
 
+\section{Foreword}
+This article is motivated by the blog~\cite{stealth-address-luigi111}.
 \section{Definitions}
 Stealth addressing is a technique whereby a \textbf{sender} can take a \textbf{recipient}'s public address and transform it to a one-time address such that:
 	\begin{itemize}
@@ -150,4 +155,5 @@ Suppose Alice wants to pay Bob, then the stealth address for Bob (assuming view 
 			\end{itemize}
 	\end{itemize}
 
+\printbibliography
 \end{document}
